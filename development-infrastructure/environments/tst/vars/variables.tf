@@ -5,7 +5,7 @@ variable "spn-client-id" {}
 variable "spn-client-secret" {}
 variable "spn-tenant-id" {}
 variable "azdo_personal_access_token" {
-  default = "hg4re3rkdpcmyiykotkmiwkws67rcnymscik6yo3mdjblr7mc3ka"
+  default = ""
 }
 
 # Create your Resource Group
