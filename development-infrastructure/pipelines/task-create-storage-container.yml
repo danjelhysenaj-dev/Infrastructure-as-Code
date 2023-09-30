@@ -1,0 +1,29 @@
+parameters:
+    container_name: ''
+
+
+steps:
+- task: CmdLine@2
+  displayName: 'Ensure tfstate storage container exists'
+  inputs:
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      # enable authentication from file
+      
+      storageaccountname="${{ parameters.techname }}"
+      
+      echo Storage Account Name  $storageaccountname
+      containername="${{ parameters.container_name }}"
+      echo The storage container name is $containername
+      if [ "${{ parameters.container_name }}" = "" ]; then
+        echo "No storage account name or container name was provided"
+      else
+          container_name_exists=$(az storage container exists --account-name "$storageaccountname" --name "$containername" | jq '.exists')
+          echo Checking wether the container with that name is existing or not  $container_name_exists
+          if [ "$container_name_exists" = "false" ];then
+            az storage container create --account-name "$storageaccountname" --name "$containername"
+            break
+          fi
+          sleep 10
+      fi
