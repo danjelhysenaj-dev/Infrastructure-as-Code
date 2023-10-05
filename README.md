@@ -1,4 +1,7 @@
 # Infrastructure-as-Code
+# Pipeline Architecture
+![iac-deploy-azure](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/6d8dbc02-b9f1-4964-a4d1-9052a93df655)
+
 
 TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
 
