@@ -29,7 +29,7 @@
 - Service connections are needed to securely integrate and interact with various azure services and external systems allowing streamlined automation.
 - Key Vault is going to be used in this project in order for us to store our secrets which later are going to be used on the pipeline.
 - Storage Accounts will be used to store our statefile in a Blob container, which will handle the state configuration of the file of Terraform.
-- ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/3c3e601b-6265-41f9-9858-851f87c6dee9)
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/3c3e601b-6265-41f9-9858-851f87c6dee9)
 
 # Now lets deploy our first Script to initialize our first resources on Azure
 
@@ -98,10 +98,10 @@
 NOTE: You can update the variable that I have declared above on your free will.
 
 - nano tfbackend.ps1
-- ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/77b4faf9-6aa6-4bd7-9814-0644574331fc)
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/77b4faf9-6aa6-4bd7-9814-0644574331fc)
 - Control + X, Hit save the file then run the script ./tfbackend.ps1
 - After executing the script you should see these resources created on Azure portal
-- ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/c2a59143-e8d0-48c6-a903-6fbe32f90f14)
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/c2a59143-e8d0-48c6-a903-6fbe32f90f14)
 
 
 # Configure Azure DevOps 
@@ -109,30 +109,184 @@ NOTE: You can update the variable that I have declared above on your free will.
 - Access Azure DevOps Portal
 - Go to your Project and Create a new one
 - Then after creating the Project Navigate at 'Service Connection' of your newly project created.
-- ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/866f21fa-3c9e-4e5f-bca9-b99c3daa298a)
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/866f21fa-3c9e-4e5f-bca9-b99c3daa298a)
 - Click Azure Resource Manager
 - Select 'Service principal (manual)' In order to choose the SPN that we created from the script above.
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/4d8ca717-1515-4ecb-8328-4164dfd4411a)
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/bcaa668b-8d02-4650-be51-8679bd4c25d2)
+- You can find the information needed in the ‘Key Vault’ Secrets
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/2b18df0a-ca83-4f34-9a82-c014c572b306)
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/aa0bed00-62c7-4852-a489-31cd7fcd034f)
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/3be011da-ae17-4864-846a-4547c3ee12fb)
+- Now create a variable group that is going to be used in the pipeline which later we will reference it to the variable group and uses the secrets as variables
+ ![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/6fbbf4c2-e74b-42ab-9c03-9d0b98f1fb54)
+-	Select ‘Terraform Demo’ (name of the ‘Service Connection’)
+-	Select the Key Vault and authorize
+-	Select the variables you want to add (all in this case)
+-	Click save and on to the next steps
+-	![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/7bd92677-006b-4a06-b783-34023ae16e39)
+
+# Initializing the repository
+
+- Go to 'Azure Repos' > ' Files'
+- Select Terraform.gitignore template
+- Select add README
+- Initialize the repository
+
+# Terraform & Azure DevOps
+
+After preparing the whole environment now we are good to go creating the multi-stage pipeline YAML in order to deploy our resources. In order to do this there is needed to do certain steps first.
+
+-	Open ‘Visual Studio Code’
+-	Open the command palette with the key combination of Ctrl + Shift + P
+-	At the command palette prompt, type gitcl, select the Git: Clone command, and press Enter
+-	When prompted for the Repository URL, select clone from GitHub, then press Enter
+-	If you are asked to sign into GitHub, complete the sign-in process
+-	Enter <tobeaddedlaterlinkofGiTHUB>s in the Repository URL field
+-	Select (or create) the local directory into which you want to clone the project.
+  	When you receive the notification asking if you want to open the cloned repository, select Open
+
+# First, commit 
+Now that you have the demo data, copy the contents of the folder to the folder for your Azure DevOps repository created in the previous blog.
+When the files are copied you see that source control has items to commit.
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/47c5c5de-3435-4478-b487-be0ab2156761)
+-	Select ‘Source Control’
+-	Hit the commit button (checkbox)
+-	Add tekst that describes the commit and press Enter Sync the changes by pressing ‘Sync Changes’
+	![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/30493304-21ca-402c-83d7-84a4b11ba66c)
+
+# Azure DevOps
+
+To see if the content is committed correctly we are going to view the content in the Azure repository.
+-	Go to the Azure DevOps Portal 
+-	Navigate to your Project
+-	From within your project navigate to ‘Repos’
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/da2b50b0-2276-4731-9fd2-0839d7f9ad46)
 
 
+# Adjust the pipeline
+
+The pipeline(s) need some additional configuration changes for your own usage. I have commented on the lines that need to be changed in the terraform/pipelines folder (tf-validate-plan-apply-basic.yml), for example:
+
+---
+            Stages:
+            - stage: Validate
+              jobs:
+              - job: ValidateInstall
+                steps:
+                - task: CmdLine@2
+                  displayName: Terraform Init
+                  inputs:
+                    #replace 'example-key1' with your key from key vault. Pipelines > Library > Variable groups
+                    script: terraform init -backend-config="access_key=$(example-key1)"
+                    workingDirectory: terraform
+
+---
+So here you have to replace ‘example-key1’ with your key from key vault. Which can be found in Pipelines > Library > Variable groups
 
 
+# Adjust the terraform files accordinally 
+The terraform files need some additional configuration changes for your own usage. I have commented on the lines that need to be changed in the terraform/ folder (backend.tf)
+The backend defines where Terraform stores its state data files.
 
-TODO: Give a short introduction of your project. Let this section explain the objectives or the motivation behind this project. 
+---
+    terraform {
+      backend "azurerm" {
+      storage_account_name = "stateterraform184" # Storage account created
+      container_name       = "ct-terraform-state-184" # Container created
+      key                  = "demo-tf.tfstate" # Desired name of tfstate file
+  }
+}
 
-# Getting Started
-TODO: Guide users through getting your code up and running on their own system. In this section you can talk about:
-1.	Installation process
-2.	Software dependencies
-3.	Latest releases
-4.	API references
+---
 
-# Build and Test
-TODO: Describe and show how to build your code and run the tests. 
+- terraform/ folder (providers.tf)
+- Providers allow Terraform to interact with cloud providers, SaaS providers, and other APIs.
 
-# Contribute
-TODO: Explain how other users and developers can contribute to make your code better. 
+---
+    terraform {
+       required_providers {
+         azurerm = {
+           source  = "hashicorp/azurerm"
+           version = "2.96.0"
+     }
+   }
+ }
 
-If you want to learn more about creating good readme files then refer the following [guidelines](https://docs.microsoft.com/en-us/azure/devops/repos/git/create-a-readme?view=azure-devops). You can also seek inspiration from the below readme files:
-- [ASP.NET Core](https://github.com/aspnet/Home)
-- [Visual Studio Code](https://github.com/Microsoft/vscode)
-- [Chakra Core](https://github.com/Microsoft/ChakraCore)
+provider "azurerm" {
+  features {}
+  subscription_id = var.subscription-id # Add your subscription id in "" or add secret in keyvault
+  client_id       = var.spn-client-id
+  client_secret   = var.spn-client-secret
+  tenant_id       = var.spn-tenant-id
+}
+
+---
+- The terraform/ folder (main.tf) here you can add or change data to your preferences, I added modules as an example.
+- The main.tf, variables.tf, outputs.tf. These are the recommended filenames for a minimal module, even if they’re empty. main.tf should be the primary entry point. For a simple module, this may be where all the resources are created. For a complex module, resource creation may be split into multiple files but any nested module calls should be in the main file.variables.tf and outputs.tf should contain the declarations for variables and outputs, respectively.
+
+---
+    # Create your Resource Group
+    resource "azurerm_resource_group" "rg" {
+      name     = "rg-tf-main-demo"
+      location = "West Europe"
+    }
+
+    # Define 'module' for modules in subfolder
+    module "modules" {
+      source = "./modules"
+    }
+
+---
+
+# Create Pipeline
+
+- Navigate to ‘Pipelines’ > ‘New pipeline’ > ‘Select Azure Repos Git’
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/210e23a7-1a9f-4d3d-9e57-6ce2e9075c3c)
+- Select your repository and select ‘Existing Azure Pipelines YAML file’
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/8efaabff-2cea-4cec-a4bd-655d11abee8c)
+- Select: /terraform/pipelines/tf-validate-plan-apply-basic.yml and press ‘Continue’
+- You are now ready to run your basic pipeline 🙂 Review you pipeline and press ‘Run’
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/5c16fbf9-90e2-4f8e-9c1c-ccc0e69d6ac3)
+For the first run, the pipeline needs permission to access resources. Select ‘View’ and permit.
+
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/78fbbcf3-6de2-4f22-b482-44ca444fd62e)
+
+As you can see the pipeline has 3 stages in this example. Validate, Plan & Apply
+-	Validate checks if the configuration is valid
+-	Plan creates an execution plan, which lets you preview the changes that Terraform plans to make to your infrastructure:
+-	Reads the current state of any already-existing remote objects to make sure that the Terraform state is up-to-date.
+-	Compares the current configuration to the prior state and notes any differences.
+-	Proposes a set of change actions that should, if applied, make the remote objects match the configuration.
+-	Apply the terraform apply command execute the actions proposed in a Terraform plan
+  
+To view the stages you can click on the stage to see more info, in this example you can see the plan stage and what is going to be created:
+
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/659e775c-65c9-4b33-b845-cc12254bc4e3)
+
+# Pipeline Steps
+
+Each steps in the stages are displayed below
+
+Validate Step
+- Initialize job
+- Download secrets
+- Checkout main branch
+- Terraform Init (Initialize modules, backend and providers)
+- Validate config
+
+Plan Step
+- Initialize job
+- Download secrets
+- Checkout main branch
+- Terraform Init (Initialize modules, backend and providers)
+- Terraform Plan
+- Copy the plan file as an artifact
+- Publish the plan file as an artifact
+Publish Step
+- Initialize job
+- Download secrets
+- Checkout main branch
+- Terraform Init (Initialize modules, backend and providers)
+- Download pipeline artifact
+- Terraform apply
