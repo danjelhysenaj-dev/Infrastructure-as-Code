@@ -283,6 +283,7 @@ Plan Step
 - Terraform Plan
 - Copy the plan file as an artifact
 - Publish the plan file as an artifact
+
 Publish Step
 - Initialize job
 - Download secrets
