@@ -291,3 +291,123 @@ Publish Step
 - Terraform Init (Initialize modules, backend and providers)
 - Download pipeline artifact
 - Terraform apply
+
+# Adding Manual Validation
+
+The Manual Validation task can be used to pause a run within a stage. This task can be used to perform manual actions or validations, after these actions you can resume or reject the run. Only YAML pipelines support this task and can only be used in an agentless job.
+
+Add code
+-	Add the following code in your pipeline above the apply stage 
+-	An example can be found locally 
+
+---
+	- job: waitForValidation
+	dependsOn: Plan
+	displayName: Wait for external validation
+	pool: server
+	timeoutInMinutes: 4320 # job times out in 3 days
+	steps:
+	- task: ManualValidation@0
+	  timeoutInMinutes: 1440 # task times out in 1 day
+	  inputs:
+	    notifyUsers: |
+	      your@email.com
+	    instructions: 'Please validate the build configuration and resume'
+	    onTimeout: 'resume' #reject
+
+---
+
+The result:
+After adding the Manual Validation task this should be the result when running the pipeline. During the run, there will be a manual review step before you can continue. 
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/da328a8c-34a6-469b-abc7-af00b86151ec)
+-	Check if the previous stages have done what you expected
+-	Click on ‘Review’ which will take you to the Manual Validation task
+-	Add your comment and hit ‘Resume’
+
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/b6a200eb-8b0b-435c-86ef-eb68272342e1)
+
+
+After the run is completed you can click on ‘1 manual validation passed’ and view who completed the task and what was commented.
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/e6217782-d087-4525-afaa-6de395e04d63)
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/616fcef2-78b2-4533-a497-fea591866a9d)
+
+# Enable Branch policy
+The branch policy will be configured to ensure the code going into the main branch will only go via a pull request. So it can’t be directly committed via a merge or push from git clients.
+
+To enable this option
+-	Go to the Azure DevOps Portal 
+-	Go to your Project
+-	From within your project navigate to ‘Repos’ > ‘Branches’
+-	Select the main (or any other given name) branch where the code is deployed
+-	Select the three dots and click on ‘Branch policies’
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/9f52fdce-8cec-4bee-8712-74ff6b5aeaa2)
+From within the branch policies you should enable the following:
+-	Require a minimum number of reviewers (for this demo set it to 1)
+-	Allow requestors to approve their own changes (so you can approve changes within this demo)
+-	Select Reset all code reviewer votes to remove all reviewer votes whenever the source branch changes, including votes to approve, reject, or wait
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/6b11dee5-ed3a-411d-a876-619b5e12765a)
+Automatically included reviewers
+You can automatically add reviewers to pull requests that change files in specific directories and files, or to all pull requests in a repo.
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/1a9cbe65-2bd3-49eb-8c19-921007a86122)
+
+
+# Test commit in main branch
+To test this:
+-	Go to the Azure DevOps Portal 
+-	Go to your Project
+-	From within your project navigate to ‘Repos’ > ‘Files’
+-	You can select the correct branch (highlighted in blue square below)
+-	Select a *.tf file and click ‘Edit’
+-	Add some text for testing and ‘Commit’
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/8b516081-8a40-4a69-8171-77dad549d3b2)
+When configured correctly you will receive this message, which is the expected outcome.
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/cdeee143-e8da-42c6-b1b9-631ba5df3c58)
+
+# Create dev branch for testing with pull requests
+Steps for creating dev branch:
+-	Go to the Azure DevOps Portal > 
+-	Go to your Project
+-	From within your project navigate to ‘Repos’ > ‘Branches’
+-	Click on ‘+ New branch’
+-	Give in the ‘Name’ and select where it should be based on.
+-	When using work items you als link the branch creation to a work item.
+-	Click on ‘Create’ to create the branch.
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/c4fa5f2e-bf7e-4144-9af5-7b0ff9e90bb9)
+
+# Create pull request
+Steps for creating dev branch:
+-	Go to the Azure DevOps Portal
+-	Go to your Project
+-	From within your project navigate to ‘Repos’ > ‘Files’
+-	Select the ‘dev’ branch (as you can see, it is also possible to create a new branch from here)
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/059fd060-6bfc-46f9-b721-788aa29133b5)
+-	Select a *.tf file and change a line of code (in this example I changed main to dev in main.tf)
+
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/42362ef3-6f93-4238-958e-1441c4ecd95a)
+-	Commit the changes and create a pull request
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/5168ca7e-5415-4bc8-b4dc-431630d89c78)
+-	Review the ‘Title’, ‘Description’, ‘Reviewers’ (if needed) and create the pull request
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/7b60cdbb-d09b-4d70-b5eb-0b4ff1c664b0)
+
+The reviewers will be informed about the needed approval and a check is done for merge conflicts.
+When you select ‘Files’ you are able to view what has changed:
+
+The pull request can be completed after approval. For this sample, I choose to ‘Delete dev after merging’. So the created dev branch will be removed.
+
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/f0b10d3b-daa4-4648-b98c-0794c94fa5e0)
+![image](https://github.com/danjelhysenaj-dev/Infrastructure-as-Code/assets/72606127/99e6b439-0a6b-4e73-8019-af0f984e9f2f)
+
+After completing the pull request there is an overview of what is done within the pull request. Which you can always review later on (for troubleshooting).
+The pipeline is triggered after main.tf has been updated.
+This is because of the following lines of code in the YAML pipeline (which specifies the trigger and includes the main branch):
+
+---
+	trigger:
+	branches:
+	  include:
+	  - main
+
+---
+
+
+
